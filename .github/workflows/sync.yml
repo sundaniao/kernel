@@ -1,0 +1,37 @@
+name: Sync with upstream
+
+on:
+  schedule:
+    # 每天 UTC 0 点执行一次（可根据需求修改 cron 表达式）
+    - cron: '0 0 * * *'
+  workflow_dispatch:   # 允许手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # 必须拉取所有分支历史，否则合并可能失败
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream and fetch
+        run: |
+          git remote add upstream https://github.com/LubanCat/kernel.git
+          git fetch upstream
+
+      - name: Merge upstream changes
+        run: |
+          # 请将 lbc-develop-6.1 替换为你需要同步的分支
+          git checkout lbc-develop-6.1
+          git merge upstream/lbc-develop-6.1 || echo "Already up to date or conflict"
+
+      - name: Push to fork
+        run: |
+          git push origin lbc-develop-6.1
